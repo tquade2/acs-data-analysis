@@ -1,1 +1,123 @@
+# Load libraries
+library(GISTools)
+library(sf)
+library(sp)
+library(tmap)
+library(rgdal)
+library(tidyverse)
+library(ggplot2)
+library(gridExtra)
+library(grid)
 
+# Load data
+acs <- st_read("C:\\Users\\tayqu\\My Drive\\School\\01 Current Semester\\R\\Assignments\\assignment 1\\acs.shp")
+acs_sf <- st_as_sf(acs)
+roads <- st_read("C:\\Users\\tayqu\\My Drive\\School\\01 Current Semester\\R\\Assignments\\assignment 1\\roads.shp")
+roads_sf <- st_as_sf(roads)
+
+# Column names and head of the acs data frame
+colnames(acs)
+head(acs)
+nrow(acs)
+
+# Column names and head of the roads data frame
+colnames(roads)
+head(roads)
+nrow(roads)
+
+# Total population statistics
+mean(acs$pop_ttl)
+median(acs$pop_ttl)
+min(acs$pop_ttl)
+max(acs$pop_ttl)
+
+# Percent population with a college degree statistics
+mean(is.na(acs$college))
+median(acs$college,na.rm=T)
+min(is.na(acs$college))
+max(is.na(acs$college))
+
+# Median household income statistics
+mean(is.na(acs$income))
+median(acs$income,na.rm=T)
+min(is.na(acs$income))
+max(is.na(acs$income))
+
+# Poverty rate statistics
+mean(is.na(acs$poverty))
+median(acs$poverty,na.rm=T)
+min(is.na(acs$poverty))
+max(is.na(acs$poverty))
+
+# Percent population without health insurance statistics
+mean(is.na(acs$n_nsrnc))
+median(acs$n_nsrnc,na.rm=T)
+min(is.na(acs$n_nsrnc))
+max(is.na(acs$n_nsrnc))
+
+# Percent households without a vehicle statistics
+mean(is.na(acs$n_vhcls))
+median(acs$n_vhcls,na.rm=T)
+min(is.na(acs$n_vhcls))
+max(is.na(acs$n_vhcls))
+
+# Plotting boxplots for population, college degree, income, poverty, health insurance, and households without a vehicle
+plot1 <- ggplot(acs, aes(x = "",pop_ttl)) + geom_boxplot()
+plot2 <- ggplot(acs, aes(x = "",college)) + geom_boxplot()
+plot3 <- ggplot(acs, aes(x = "",income)) + geom_boxplot()
+plot4 <- ggplot(acs, aes(x = "",poverty)) + geom_boxplot()
+plot5 <- ggplot(acs, aes(x = "",n_nsrnc)) + geom_boxplot()
+plot6<-ggplot(acs, aes(x = "",n_vhcls)) + geom_boxplot()
+
+ggplot(data = acs, mapping = aes(x = income, y = n_nsrnc)) + 
+  geom_point() + 
+  geom_smooth(method = "lm") -> plot1
+
+png("scatterplot.png")
+plot1
+dev.off()
+
+tm_shape(acs_sf) +
+  tm_polygons("college", title = "% population with college degree", palette = "Blues", 
+              legend.hist = T) +
+  tm_scale_bar(width = 0.2) +
+  tm_compass(position = c(.8,.7)) +
+  tm_layout(frame = F, legend.hist.size = 0.5) -> p1
+
+tm_shape(acs_sf) +
+  tm_polygons("income", title = "median household income", palette = "Greens", 
+              legend.hist = T) +
+  tm_scale_bar(width = 0.2) +
+  tm_compass(position = c(.8,.7)) +
+  tm_layout(frame = F, legend.hist.size = 0.5) -> p2
+
+tm_shape(acs_sf) +
+  tm_polygons("n_nsrnc", title = "% population without health insurance", palette = "Reds", 
+              legend.hist = T) +
+  tm_scale_bar(width = 0.2) +
+  tm_compass(position = c(.8,.7)) +
+  tm_layout(frame = F, legend.hist.size = 0.5) -> p3
+
+tm_shape(acs_sf) +
+  tm_polygons("n_vhcls", title = "% households without a vehicle", palette = "Purples", 
+              legend.hist = T) +
+  tm_scale_bar(width = 0.2) +
+  tm_compass(position = c(.8,.7)) +
+  tm_layout(frame = F, legend.hist.size = 0.5) -> p4
+
+tmap_arrange(p1,p2,p3,p4) -> plot2
+
+png("acsmap.png")
+plot2
+dev.off()
+
+st_union(acs_sf) -> f
+
+tm_shape(roads) +
+  tm_lines("RTTYP", lwd = 1, title.col = "Road Type", palette = "Spectral") +
+  tm_shape(f) +
+  tm_borders(lwd = 3) -> roadmap
+
+png("roadmap.png")
+roadmap
+dev.off()
